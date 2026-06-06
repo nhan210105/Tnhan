@@ -1,0 +1,139 @@
+TapGame/
+├── TapGameApp.swift
+├── ContentView.swift
+└── GameViewModel.swift
+import SwiftUI
+
+@main
+struct TapGameApp: App {
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+        }
+    }
+}
+import SwiftUI
+
+class GameViewModel: ObservableObject {
+
+    @Published var score = 0
+    @Published var timeRemaining = 30
+    @Published var targetX: CGFloat = 150
+    @Published var targetY: CGFloat = 300
+    @Published var gameOver = false
+
+    var timer: Timer?
+
+    func startGame() {
+        score = 0
+        timeRemaining = 30
+        gameOver = false
+
+        moveTarget()
+
+        timer?.invalidate()
+
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+            self.timeRemaining -= 1
+
+            if self.timeRemaining <= 0 {
+                self.timer?.invalidate()
+                self.gameOver = true
+            }
+        }
+    }
+
+    func targetTapped() {
+        guard !gameOver else { return }
+
+        score += 1
+        moveTarget()
+    }
+
+    func moveTarget() {
+        targetX = CGFloat.random(in: 50...320)
+        targetY = CGFloat.random(in: 150...650)
+    }
+}
+import SwiftUI
+
+struct ContentView: View {
+
+    @StateObject private var game = GameViewModel()
+
+    var body: some View {
+
+        ZStack {
+
+            LinearGradient(
+                colors: [.blue, .purple],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            VStack {
+
+                Text("Tap Game")
+                    .font(.largeTitle)
+                    .bold()
+                    .foregroundColor(.white)
+
+                HStack {
+
+                    Text("Điểm: \(game.score)")
+                        .foregroundColor(.white)
+
+                    Spacer()
+
+                    Text("Thời gian: \(game.timeRemaining)")
+                        .foregroundColor(.white)
+                }
+                .padding()
+
+                Spacer()
+            }
+
+            if !game.gameOver {
+
+                Circle()
+                    .fill(.white)
+                    .frame(width: 70, height: 70)
+                    .position(x: game.targetX, y: game.targetY)
+                    .onTapGesture {
+                        game.targetTapped()
+                    }
+
+            } else {
+
+                VStack(spacing: 20) {
+
+                    Text("Hết giờ!")
+                        .font(.largeTitle)
+                        .foregroundColor(.white)
+
+                    Text("Điểm của bạn: \(game.score)")
+                        .font(.title2)
+                        .foregroundColor(.white)
+
+                    Button("Chơi lại") {
+                        game.startGame()
+                    }
+                    .padding()
+                    .background(.white)
+                    .cornerRadius(12)
+                }
+            }
+        }
+        .onAppear {
+            game.startGame()
+        }
+    }
+}
+TapGame
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/USERNAME/TapGame.git
+git push -u origin main
