@@ -5,7 +5,7 @@ workflows:
     environment:
       xcode: latest
 
-    scripts:
+          scripts:
       - name: Install XcodeGen
         script: |
           brew install xcodegen
@@ -14,13 +14,30 @@ workflows:
         script: |
           xcodegen generate
 
-      - name: Build app
+      - name: Build and Package Unsigned IPA
         script: |
+          # 1. Biên dịch ứng dụng cho thiết bị thật nhưng tắt hoàn toàn Code Sign
           xcodebuild \
-          -project TapGame.xcodeproj \
-          -scheme TapGame \
-          -sdk iphoneos \
-          build
+            -project TapGame.xcodeproj \
+            -scheme TapGame \
+            -sdk iphoneos \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE="" \
+            clean build
+
+          # 2. Tạo thư mục Payload đúng cấu trúc chuẩn của Apple
+          mkdir -p Payload
+
+          # 3. Sao chép file .app vừa build xong vào thư mục Payload
+          cp -r build/Build/Products/Release-iphoneos/TapGame.app Payload/
+
+          # 4. Nén thư mục Payload lại thành file .ipa
+          zip -r TapGame.ipa Payload
 
     artifacts:
-      - build/**/*.app
+      - "*.ipa"
+
